@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 public class PlayerHealth : MonoBehaviour
-{
+{ // Observer event notifies other scripts whenever the player's health changes.
     public static event Action<int> OnHealthChanged;
 
     [SerializeField] private int maxHealth = 100;

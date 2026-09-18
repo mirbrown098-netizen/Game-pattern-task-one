@@ -1,7 +1,7 @@
 using UnityEngine;
 
 public class GameManager : MonoBehaviour
-{
+{// Singleton instance allows other scripts to access the GameManager.
     public static GameManager Instance { get; private set; }
 
     public enum GameState

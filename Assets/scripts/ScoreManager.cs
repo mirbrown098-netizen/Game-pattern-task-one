@@ -2,7 +2,7 @@ using System;
 using UnityEngine;
 
 public class ScoreManager : MonoBehaviour
-{
+{// Observer event notifies other scripts whenever the score changes.
     public static event Action<int> OnScoreChanged;
 
     private int score = 0;
