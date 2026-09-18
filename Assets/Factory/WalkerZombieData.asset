@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 069e83530cba1fb439c2a439abad3151, type: 3}
+  m_Name: WalkerZombieData
+  m_EditorClassIdentifier: 
+  enemyName: Walker Zombie
+  prefab: {fileID: 1061208809373681850, guid: b0d325da9035b9d478db35f62a221037, type: 3}
+  health: 150
+  speed: 1.5
