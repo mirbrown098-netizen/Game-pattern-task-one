@@ -4,36 +4,58 @@ public class FactoryTest : MonoBehaviour
 {
     [SerializeField] private EnemyFactory factory;
 
+    [Header("3D Spawn Positions")]
+    [SerializeField]
+    private Vector3 walkerSpawnPosition =
+        new Vector3(4f, 0f, 4f);
+
+    [SerializeField]
+    private Vector3 runnerSpawnPosition =
+        new Vector3(-4f, 0f, 4f);
+
     private GameObject lastSpawnedEnemy;
 
-    private void Update()
+    public void SpawnWalker()
     {
-        // 4 = Spawn Walker Zombie
-        if (Input.GetKeyDown(KeyCode.Alpha4))
+        if (factory == null)
         {
-            lastSpawnedEnemy = factory.Spawn(
-                0,
-                new Vector3(4f, 2f, 0f)
-            );
+            Debug.LogWarning("FactoryTest: EnemyFactory is not assigned.");
+            return;
         }
 
-        // 5 = Spawn Runner Zombie
-        if (Input.GetKeyDown(KeyCode.Alpha5))
+        lastSpawnedEnemy = factory.Spawn(
+            0,
+            walkerSpawnPosition
+        );
+    }
+
+    public void SpawnRunner()
+    {
+        if (factory == null)
         {
-            lastSpawnedEnemy = factory.Spawn(
-                1,
-                new Vector3(4f, -2f, 0f)
-            );
+            Debug.LogWarning("FactoryTest: EnemyFactory is not assigned.");
+            return;
         }
 
-        // 6 = Return the last spawned zombie to the pool
-        if (Input.GetKeyDown(KeyCode.Alpha6))
+        lastSpawnedEnemy = factory.Spawn(
+            1,
+            runnerSpawnPosition
+        );
+    }
+
+    public void ReturnLastSpawnedEnemy()
+    {
+        if (factory == null)
         {
-            if (lastSpawnedEnemy != null &&
-                lastSpawnedEnemy.activeInHierarchy)
-            {
-                factory.ReturnEnemy(lastSpawnedEnemy);
-            }
+            Debug.LogWarning("FactoryTest: EnemyFactory is not assigned.");
+            return;
+        }
+
+        if (lastSpawnedEnemy != null &&
+            lastSpawnedEnemy.activeInHierarchy)
+        {
+            factory.ReturnEnemy(lastSpawnedEnemy);
+            lastSpawnedEnemy = null;
         }
     }
 }
