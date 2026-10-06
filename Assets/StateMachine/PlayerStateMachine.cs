@@ -6,10 +6,13 @@ public class PlayerStateMachine : MonoBehaviour
     public static event Action<string> OnPlayerStateChanged;
 
     private StateMachine stateMachine;
+    private IState currentState;
 
     private IState idleState;
     private IState movingState;
     private IState attackingState;
+
+    [SerializeField] private string currentStateName = "None";
 
     private void Start()
     {
@@ -19,36 +22,42 @@ public class PlayerStateMachine : MonoBehaviour
         movingState = new PlayerMovingState(this);
         attackingState = new PlayerAttackingState(this);
 
-        ChangeState(idleState);
+        ChangeToIdle();
     }
 
     private void Update()
     {
         stateMachine.Tick();
-
-        if (Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            ChangeState(idleState);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            ChangeState(movingState);
-        }
-
-        if (Input.GetKeyDown(KeyCode.Alpha3))
-        {
-            ChangeState(attackingState);
-        }
     }
 
-    public void ChangeState(IState newState)
+    public void ChangeToIdle()
     {
+        ChangeState(idleState);
+    }
+
+    public void ChangeToMoving()
+    {
+        ChangeState(movingState);
+    }
+
+    public void ChangeToAttacking()
+    {
+        ChangeState(attackingState);
+    }
+
+    private void ChangeState(IState newState)
+    {
+        if (currentState == newState)
+            return;
+
         stateMachine.ChangeState(newState);
+        currentState = newState;
     }
 
     public void NotifyStateChanged(string stateName)
     {
+        currentStateName = stateName;
+
         OnPlayerStateChanged?.Invoke(stateName);
         Debug.Log("Player State: " + stateName);
     }
@@ -68,9 +77,13 @@ public class PlayerIdleState : IState
         player.NotifyStateChanged("Idle");
     }
 
-    public void Tick() { }
+    public void Tick()
+    {
+    }
 
-    public void Exit() { }
+    public void Exit()
+    {
+    }
 }
 
 public class PlayerMovingState : IState
@@ -87,9 +100,13 @@ public class PlayerMovingState : IState
         player.NotifyStateChanged("Moving");
     }
 
-    public void Tick() { }
+    public void Tick()
+    {
+    }
 
-    public void Exit() { }
+    public void Exit()
+    {
+    }
 }
 
 public class PlayerAttackingState : IState
@@ -106,7 +123,11 @@ public class PlayerAttackingState : IState
         player.NotifyStateChanged("Attacking");
     }
 
-    public void Tick() { }
+    public void Tick()
+    {
+    }
 
-    public void Exit() { }
+    public void Exit()
+    {
+    }
 }
