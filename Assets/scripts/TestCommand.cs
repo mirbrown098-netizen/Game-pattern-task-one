@@ -1,26 +1,23 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 
 public class TestCommand : MonoBehaviour
 {
     [SerializeField] private PlayerHealth playerHealth;
     [SerializeField] private ScoreManager scoreManager;
 
-    private void Update()
+    public void TestDamage()
     {
-        if (Input.GetKeyDown(KeyCode.Space))
+        if (playerHealth != null)
         {
             playerHealth.TakeDamage(10);
         }
+    }
 
-        if (Input.GetKeyDown(KeyCode.C))
+    public void TestScore()
+    {
+        if (scoreManager != null)
         {
             scoreManager.AddScore(10);
-        }
-
-        if (Input.GetKeyDown(KeyCode.R))
-        {
-            SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
         }
     }
 }
