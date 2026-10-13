@@ -13,6 +13,7 @@ GameObject:
   - component: {fileID: 5459101698102572738}
   - component: {fileID: 4343271689074533605}
   - component: {fileID: 3481435404236078944}
+  - component: {fileID: -5148688698328076320}
   m_Layer: 0
   m_Name: ZombieEnemy3D
   m_TagString: Untagged
@@ -128,9 +129,25 @@ MonoBehaviour:
   rotationSpeed: 8
   chaseDistance: 100
   attackDistance: 1.5
+  attackDamage: 10
+  attackCooldown: 1.5
   groundCheckHeight: 2
   groundOffset: 0
   currentStateName: None
+--- !u!114 &-5148688698328076320
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2642447521959127312}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 13537c0e19978834ea86bbf2f55e6525, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  maxHealth: 50
+  currentHealth: 50
 --- !u!1001 &7026058825328852616
 PrefabInstance:
   m_ObjectHideFlags: 0

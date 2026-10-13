@@ -1,3 +1,4 @@
+
 using UnityEngine;
 
 public class GameUIController : MonoBehaviour
@@ -5,6 +6,7 @@ public class GameUIController : MonoBehaviour
     [Header("UI Panels")]
     [SerializeField] private GameObject mainMenuPanel;
     [SerializeField] private GameObject gameOverPanel;
+    [SerializeField] private GameObject victoryPanel;
 
     private GameManager.GameState currentState;
 
@@ -30,7 +32,8 @@ public class GameUIController : MonoBehaviour
     {
         // Keep the cursor unlocked while menus are open.
         if (currentState == GameManager.GameState.MainMenu ||
-            currentState == GameManager.GameState.GameOver)
+            currentState == GameManager.GameState.GameOver ||
+            currentState == GameManager.GameState.Victory)
         {
             Cursor.lockState = CursorLockMode.None;
             Cursor.visible = true;
@@ -52,6 +55,13 @@ public class GameUIController : MonoBehaviour
         {
             gameOverPanel.SetActive(
                 newState == GameManager.GameState.GameOver
+            );
+        }
+
+        if (victoryPanel != null)
+        {
+            victoryPanel.SetActive(
+                newState == GameManager.GameState.Victory
             );
         }
 

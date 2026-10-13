@@ -1,3 +1,4 @@
+
 using System;
 using UnityEngine;
 
@@ -10,7 +11,8 @@ public class GameManager : MonoBehaviour
     {
         MainMenu,
         Playing,
-        GameOver
+        GameOver,
+        Victory
     }
 
     public static event Action<GameState> OnGameStateChanged;
@@ -31,9 +33,29 @@ public class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
+    private void OnEnable()
+    {
+        PlayerHealth.OnPlayerDied += HandlePlayerDied;
+    }
+
+    private void OnDisable()
+    {
+        PlayerHealth.OnPlayerDied -= HandlePlayerDied;
+    }
+
     private void Start()
     {
-        ChangeState(GameState.MainMenu);
+        // Notify UI even if the starting state is already MainMenu.
+        currentState = GameState.MainMenu;
+        OnGameStateChanged?.Invoke(currentState);
+    }
+
+    private void HandlePlayerDied()
+    {
+        if (currentState == GameState.Playing)
+        {
+            EndGame();
+        }
     }
 
     public void ChangeState(GameState newState)
@@ -56,6 +78,14 @@ public class GameManager : MonoBehaviour
     public void EndGame()
     {
         ChangeState(GameState.GameOver);
+    }
+
+    public void WinGame()
+    {
+        if (currentState == GameState.Playing)
+        {
+            ChangeState(GameState.Victory);
+        }
     }
 
     public void ReturnToMainMenu()

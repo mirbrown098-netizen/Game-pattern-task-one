@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.EventSystems;
@@ -16,24 +17,29 @@ public class StarterAssetsCommandBridge : MonoBehaviour
     [SerializeField] private GameManager gameManager;
 
     [Header("Attack")]
+    [SerializeField] private SwordAttack swordAttack;
     [SerializeField] private float attackStateDuration = 0.35f;
 
     private float attackTimer;
 
     private void Update()
     {
-        // LEFT MOUSE = ATTACK
-        // Do not attack when clicking a UI element.
+        bool isPlaying =
+            gameManager != null &&
+            gameManager.CurrentState == GameManager.GameState.Playing;
+
+        // LEFT MOUSE = SWORD ATTACK
         bool pointerOverUI =
             EventSystem.current != null &&
             EventSystem.current.IsPointerOverGameObject();
 
-        if (Mouse.current != null &&
+        if (isPlaying &&
+            Mouse.current != null &&
             Mouse.current.leftButton.wasPressedThisFrame &&
             !pointerOverUI)
         {
             ICommand command =
-                new AttackCommand(playerStateMachine);
+                new AttackCommand(playerStateMachine, swordAttack);
 
             commandHandler.ExecuteCommand(command);
 

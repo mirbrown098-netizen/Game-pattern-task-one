@@ -1,3 +1,4 @@
+
 using System;
 using UnityEngine;
 
@@ -18,6 +19,10 @@ public class EnemyStateMachine : MonoBehaviour
     public float rotationSpeed = 8f;
     public float chaseDistance = 100f;
     public float attackDistance = 1.5f;
+
+    [Header("Attack")]
+    public int attackDamage = 10;
+    public float attackCooldown = 1.5f;
 
     [Header("Ground Following")]
     public float groundCheckHeight = 3f;
@@ -90,7 +95,6 @@ public class EnemyStateMachine : MonoBehaviour
         Vector3 direction = targetPosition - currentPosition;
         direction.y = 0f;
 
-        // Face the player while chasing.
         if (direction.sqrMagnitude > 0.001f)
         {
             Quaternion targetRotation =
@@ -103,7 +107,6 @@ public class EnemyStateMachine : MonoBehaviour
             );
         }
 
-        // Required movement for the assignment.
         Vector3 nextPosition = Vector3.MoveTowards(
             currentPosition,
             targetPosition,
@@ -131,7 +134,6 @@ public class EnemyStateMachine : MonoBehaviour
 
         foreach (RaycastHit hit in hits)
         {
-            // Ignore the zombie's own collider and children.
             if (hit.collider.transform.IsChildOf(transform) ||
                 hit.collider.transform == transform)
             {
@@ -148,6 +150,33 @@ public class EnemyStateMachine : MonoBehaviour
         if (foundGround)
         {
             nextPosition.y = highestGround + groundOffset;
+        }
+    }
+
+    public void DealDamageToPlayer()
+    {
+        if (Player == null)
+            return;
+
+        PlayerHealth playerHealth =
+            Player.GetComponent<PlayerHealth>();
+
+        if (playerHealth == null)
+        {
+            playerHealth =
+                Player.GetComponentInChildren<PlayerHealth>();
+        }
+
+        if (playerHealth != null)
+        {
+            playerHealth.TakeDamage(attackDamage);
+            Debug.Log("Zombie dealt " + attackDamage + " damage!");
+        }
+        else
+        {
+            Debug.LogWarning(
+                "Zombie could not find PlayerHealth on the player."
+            );
         }
     }
 
@@ -223,6 +252,7 @@ public class EnemyChaseState : IState
 public class EnemyAttackState : IState
 {
     private EnemyStateMachine enemy;
+    private float nextAttackTime;
 
     public EnemyAttackState(EnemyStateMachine enemy)
     {
@@ -232,13 +262,26 @@ public class EnemyAttackState : IState
     public void Enter()
     {
         Debug.Log("Enemy entered Attack");
+        nextAttackTime = Time.time;
     }
 
     public void Tick()
     {
+        if (enemy.Player == null)
+            return;
+
         if (enemy.DistanceToPlayer() > enemy.attackDistance)
         {
             enemy.ChangeState(enemy.ChaseState, "Chase");
+            return;
+        }
+
+        if (Time.time >= nextAttackTime)
+        {
+            enemy.DealDamageToPlayer();
+
+            nextAttackTime =
+                Time.time + enemy.attackCooldown;
         }
     }
 

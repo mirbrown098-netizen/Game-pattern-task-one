@@ -1,3 +1,4 @@
+
 using UnityEngine;
 using UnityEngine.InputSystem;
 
@@ -7,6 +8,7 @@ public class PlayerCommandInput : MonoBehaviour
     [SerializeField] private PlayerStateMachine playerStateMachine;
     [SerializeField] private FactoryTest factoryTest;
     [SerializeField] private GameManager gameManager;
+    [SerializeField] private SwordAttack swordAttack;
 
     [SerializeField] private float moveSpeed = 5f;
     [SerializeField] private float attackStateDuration = 0.35f;
@@ -83,7 +85,7 @@ public class PlayerCommandInput : MonoBehaviour
             Mouse.current.leftButton.wasPressedThisFrame)
         {
             ICommand command =
-                new AttackCommand(playerStateMachine);
+                new AttackCommand(playerStateMachine, swordAttack);
 
             commandHandler.ExecuteCommand(command);
 
