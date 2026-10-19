@@ -69,8 +69,9 @@ Third-party assets remain subject to their respective licenses and attribution r
 
 ## AI assistance
 
-ChatGPT was used to help interpret assignment requirements, plan the implementation, explain design patterns, troubleshoot Unity/C# errors, and draft documentation. The project was assembled and tested in the Unity Editor by the student.
+ChatGPT was used to help interpret assignment requirements, explain design patterns, troubleshoot Unity/C# errors. The project was assembled and tested in the Unity Editor by me.
 
 ## Sprint A scope
 
-This is a **playable prototype**, not a finished commercial game. The primary goal is to demonstrate a complete third-person gameplay loop and integration of the required software design patterns.
+This is a **playable prototype**, not a finished commercial game. The primary goal is to demonstrate a complete third-person gameplay loop and integration of the required softwa
+re design patterns.
