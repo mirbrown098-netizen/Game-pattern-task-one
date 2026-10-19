@@ -14,6 +14,8 @@ public class EnemyStateMachine : MonoBehaviour
 
     public Transform Player { get; private set; }
 
+    private Animator zombieAnimator;
+
     [Header("Movement")]
     public float speed = 2f;
     public float rotationSpeed = 8f;
@@ -24,15 +26,27 @@ public class EnemyStateMachine : MonoBehaviour
     public int attackDamage = 10;
     public float attackCooldown = 1.5f;
 
+    [Header("Attack Line of Sight")]
+    public float attackCheckHeight = 1f;
+
     [Header("Ground Following")]
     public float groundCheckHeight = 3f;
     public float groundOffset = 1f;
 
+    [Header("Wall Collision Fix")]
+    public float wallCheckHeight = 0.5f;
+    public float wallCheckRadius = 0.3f;
+    public float maximumStepHeight = 0.35f;
+    public float minimumGroundNormal = 0.65f;
+
     [Header("Current State")]
-    [SerializeField] private string currentStateName = "None";
+    [SerializeField]
+    private string currentStateName = "None";
 
     private void Start()
     {
+        zombieAnimator = GetComponentInChildren<Animator>();
+
         GameObject playerObject =
             GameObject.FindGameObjectWithTag("Player");
 
@@ -52,7 +66,10 @@ public class EnemyStateMachine : MonoBehaviour
 
     private void Update()
     {
-        stateMachine.Tick();
+        if (stateMachine != null)
+        {
+            stateMachine.Tick();
+        }
     }
 
     public void ChangeState(IState newState, string stateName)
@@ -76,7 +93,74 @@ public class EnemyStateMachine : MonoBehaviour
         enemyPosition.y = 0f;
         playerPosition.y = 0f;
 
-        return Vector3.Distance(enemyPosition, playerPosition);
+        return Vector3.Distance(
+            enemyPosition,
+            playerPosition
+        );
+    }
+
+    // NEW: Check for walls between Romero and the player.
+    public bool HasClearAttackPath()
+    {
+        if (Player == null)
+            return false;
+
+        Vector3 origin =
+            transform.position +
+            Vector3.up * attackCheckHeight;
+
+        Vector3 target =
+            Player.position +
+            Vector3.up * attackCheckHeight;
+
+        Vector3 direction = target - origin;
+        float distance = direction.magnitude;
+
+        if (distance <= 0.01f)
+            return true;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            origin,
+            direction.normalized,
+            distance,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider == null)
+                continue;
+
+            Transform hitTransform =
+                hit.collider.transform;
+
+            // Ignore Romero's own colliders.
+            if (hitTransform == transform ||
+                hitTransform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            // Ignore the player's colliders.
+            if (hitTransform == Player ||
+                hitTransform.IsChildOf(Player))
+            {
+                continue;
+            }
+
+            // Ignore other zombies.
+            if (hit.collider.GetComponentInParent<
+                EnemyStateMachine>() != null)
+            {
+                continue;
+            }
+
+            // Something solid blocks the attack.
+            return false;
+        }
+
+        return true;
     }
 
     public void MoveTowardPlayer()
@@ -92,64 +176,176 @@ public class EnemyStateMachine : MonoBehaviour
             Player.position.z
         );
 
-        Vector3 direction = targetPosition - currentPosition;
+        Vector3 direction =
+            targetPosition - currentPosition;
+
         direction.y = 0f;
 
-        if (direction.sqrMagnitude > 0.001f)
-        {
-            Quaternion targetRotation =
-                Quaternion.LookRotation(direction.normalized);
+        if (direction.sqrMagnitude <= 0.001f)
+            return;
 
-            transform.rotation = Quaternion.Slerp(
-                transform.rotation,
-                targetRotation,
-                rotationSpeed * Time.deltaTime
+        Vector3 moveDirection = direction.normalized;
+
+        Quaternion targetRotation =
+            Quaternion.LookRotation(moveDirection);
+
+        transform.rotation = Quaternion.Slerp(
+            transform.rotation,
+            targetRotation,
+            rotationSpeed * Time.deltaTime
+        );
+
+        float moveDistance =
+            Mathf.Min(
+                speed * Time.deltaTime,
+                direction.magnitude
             );
+
+        if (IsWallBlocking(moveDirection, moveDistance))
+        {
+            return;
         }
 
-        Vector3 nextPosition = Vector3.MoveTowards(
-            currentPosition,
-            targetPosition,
-            speed * Time.deltaTime
-        );
+        Vector3 nextPosition =
+            currentPosition +
+            moveDirection * moveDistance;
 
         FollowGround(ref nextPosition);
 
         transform.position = nextPosition;
     }
 
-    private void FollowGround(ref Vector3 nextPosition)
+    private bool IsWallBlocking(
+        Vector3 direction,
+        float moveDistance
+    )
     {
         Vector3 rayStart =
-            nextPosition + Vector3.up * groundCheckHeight;
+            transform.position +
+            Vector3.up * wallCheckHeight;
 
-        RaycastHit[] hits = Physics.RaycastAll(
+        RaycastHit[] hits = Physics.SphereCastAll(
             rayStart,
-            Vector3.down,
-            groundCheckHeight * 2f
+            wallCheckRadius,
+            direction,
+            moveDistance + 0.05f,
+            ~0,
+            QueryTriggerInteraction.Ignore
         );
-
-        float highestGround = float.NegativeInfinity;
-        bool foundGround = false;
 
         foreach (RaycastHit hit in hits)
         {
-            if (hit.collider.transform.IsChildOf(transform) ||
-                hit.collider.transform == transform)
+            if (hit.collider == null)
+                continue;
+
+            Transform hitTransform =
+                hit.collider.transform;
+
+            if (hitTransform == transform ||
+                hitTransform.IsChildOf(transform))
             {
                 continue;
             }
 
-            if (hit.point.y > highestGround)
+            if (Player != null &&
+                (hitTransform == Player ||
+                 hitTransform.IsChildOf(Player)))
             {
-                highestGround = hit.point.y;
+                continue;
+            }
+
+            if (hit.collider.GetComponentInParent<
+                EnemyStateMachine>() != null)
+            {
+                continue;
+            }
+
+            if (hit.normal.y >= minimumGroundNormal)
+            {
+                continue;
+            }
+
+            return true;
+        }
+
+        return false;
+    }
+
+    private void FollowGround(ref Vector3 nextPosition)
+    {
+        Vector3 rayStart =
+            nextPosition +
+            Vector3.up * groundCheckHeight;
+
+        RaycastHit[] hits = Physics.RaycastAll(
+            rayStart,
+            Vector3.down,
+            groundCheckHeight * 2f,
+            ~0,
+            QueryTriggerInteraction.Ignore
+        );
+
+        float bestGroundHeight =
+            float.NegativeInfinity;
+
+        bool foundGround = false;
+
+        foreach (RaycastHit hit in hits)
+        {
+            if (hit.collider == null)
+                continue;
+
+            Transform hitTransform =
+                hit.collider.transform;
+
+            if (hitTransform == transform ||
+                hitTransform.IsChildOf(transform))
+            {
+                continue;
+            }
+
+            if (Player != null &&
+                (hitTransform == Player ||
+                 hitTransform.IsChildOf(Player)))
+            {
+                continue;
+            }
+
+            if (hit.collider.GetComponentInParent<
+                EnemyStateMachine>() != null)
+            {
+                continue;
+            }
+
+            if (hit.normal.y < minimumGroundNormal)
+            {
+                continue;
+            }
+
+            float targetHeight =
+                hit.point.y + groundOffset;
+
+            if (targetHeight >
+                transform.position.y + maximumStepHeight)
+            {
+                continue;
+            }
+
+            if (hit.point.y > bestGroundHeight)
+            {
+                bestGroundHeight = hit.point.y;
                 foundGround = true;
             }
         }
 
         if (foundGround)
         {
-            nextPosition.y = highestGround + groundOffset;
+            nextPosition.y =
+                bestGroundHeight + groundOffset;
+        }
+        else
+        {
+            nextPosition.y = transform.position.y;
         }
     }
 
@@ -157,6 +353,15 @@ public class EnemyStateMachine : MonoBehaviour
     {
         if (Player == null)
             return;
+
+        // NEW: No damage through walls.
+        if (!HasClearAttackPath())
+            return;
+
+        if (zombieAnimator != null)
+        {
+            zombieAnimator.SetTrigger("Attack");
+        }
 
         PlayerHealth playerHealth =
             Player.GetComponent<PlayerHealth>();
@@ -170,12 +375,17 @@ public class EnemyStateMachine : MonoBehaviour
         if (playerHealth != null)
         {
             playerHealth.TakeDamage(attackDamage);
-            Debug.Log("Zombie dealt " + attackDamage + " damage!");
+
+            Debug.Log(
+                "Zombie dealt " +
+                attackDamage +
+                " damage!"
+            );
         }
         else
         {
             Debug.LogWarning(
-                "Zombie could not find PlayerHealth on the player."
+                "Zombie could not find PlayerHealth."
             );
         }
     }
@@ -184,6 +394,11 @@ public class EnemyStateMachine : MonoBehaviour
     public IState ChaseState => chaseState;
     public IState AttackState => attackState;
 }
+
+
+// ========================================
+// IDLE STATE
+// ========================================
 
 public class EnemyIdleState : IState
 {
@@ -203,12 +418,20 @@ public class EnemyIdleState : IState
     {
         if (enemy.DistanceToPlayer() <= enemy.chaseDistance)
         {
-            enemy.ChangeState(enemy.ChaseState, "Chase");
+            enemy.ChangeState(
+                enemy.ChaseState,
+                "Chase"
+            );
         }
     }
 
     public void Exit() { }
 }
+
+
+// ========================================
+// CHASE STATE
+// ========================================
 
 public class EnemyChaseState : IState
 {
@@ -229,17 +452,24 @@ public class EnemyChaseState : IState
         if (enemy.Player == null)
             return;
 
-        float distance = enemy.DistanceToPlayer();
+        float distance =
+            enemy.DistanceToPlayer();
 
         if (distance <= enemy.attackDistance)
         {
-            enemy.ChangeState(enemy.AttackState, "Attack");
+            enemy.ChangeState(
+                enemy.AttackState,
+                "Attack"
+            );
             return;
         }
 
         if (distance > enemy.chaseDistance)
         {
-            enemy.ChangeState(enemy.IdleState, "Idle");
+            enemy.ChangeState(
+                enemy.IdleState,
+                "Idle"
+            );
             return;
         }
 
@@ -248,6 +478,11 @@ public class EnemyChaseState : IState
 
     public void Exit() { }
 }
+
+
+// ========================================
+// ATTACK STATE
+// ========================================
 
 public class EnemyAttackState : IState
 {
@@ -270,9 +505,19 @@ public class EnemyAttackState : IState
         if (enemy.Player == null)
             return;
 
-        if (enemy.DistanceToPlayer() > enemy.attackDistance)
+        if (enemy.DistanceToPlayer() >
+            enemy.attackDistance)
         {
-            enemy.ChangeState(enemy.ChaseState, "Chase");
+            enemy.ChangeState(
+                enemy.ChaseState,
+                "Chase"
+            );
+            return;
+        }
+
+        // NEW: Only attack when the path is clear.
+        if (!enemy.HasClearAttackPath())
+        {
             return;
         }
 
