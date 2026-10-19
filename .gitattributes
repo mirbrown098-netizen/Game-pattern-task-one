@@ -1,3 +1,4 @@
 # Auto detect text files and perform LF normalization
 * text=auto
 Assests/Zombiemodels/Ch10_nonPBR.fbx filter=lfs diff=lfs merge=lfs -text
+Assets/Zombiemodels/Ch10_nonPBR.fbx filter=lfs diff=lfs merge=lfs -text
